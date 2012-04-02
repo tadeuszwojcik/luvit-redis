@@ -1,3 +1,3 @@
 Hiredis bindings for Luvit
 =====
-"STATUS":EXPERIMENTAL
+STATUS: WORK IN PROGRESS
