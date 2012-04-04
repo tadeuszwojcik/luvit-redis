@@ -154,14 +154,14 @@ static int lua_client_command(lua_State * L)
   {
     luaL_error(L, "lua-redis error: connection is null");
 
-    return NULL; /* Unreachable */
+    return 0; /* Unreachable */
   }
 
   if (lua_redis_client->redis_async_context == NULL)
   {
     luaL_error(L, "lua-redis error: attempted to use closed connection");
 
-    return NULL; /* Unreachable */
+    return 0; /* Unreachable */
   }
 
 
@@ -210,7 +210,7 @@ static int lua_create_client(lua_State * L)
   {
     int result = push_error(L, redis_async_context);
 
-    redisFree(redis_async_context);
+    redisAsyncFree(redis_async_context);
     redis_async_context = NULL;
 
     return result;

@@ -1,14 +1,12 @@
-CFLAGS=-I/usr/local/include/luvit -I/usr/local/include/luvit/uv -I/usr/local/include/luvit/luajit -I/usr/local/include/luvit/http_parser -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -fPIC
-
+CFLAGS=$(shell luvit --cflags)
 LIBS=$(shell luvit --libs)
 
-all: redis.luvit
+all: build/redis.luvit
 
-luvit-redis.o: src/luvit-redis.c
-	$(CC) -c src/luvit-redis.c ${CFLAGS} -I/usr/local/include/hiredis src/libev.h
+build/%.luvit: src/%.c
+	mkdir -p build
 
-redis.luvit: luvit-redis.o
-	$(CC) -o redis.luvit luvit-redis.o ${LIBS} /usr/local/lib/libhiredis.a
+	$(CC) ${CFLAGS} -I/usr/local/include/hiredis src/libev.h -o $@ $^ ${LIBS} /usr/local/lib/libhiredis.a
 
 clean:
-	rm -f luvit-redis.o redis.luvit
+	rm -fr build
