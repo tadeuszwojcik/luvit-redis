@@ -2,13 +2,13 @@ CFLAGS=-I/usr/local/include/luvit -I/usr/local/include/luvit/uv -I/usr/local/inc
 
 LIBS=$(shell luvit --libs)
 
-all: hiredis.luvit
+all: redis.luvit
 
-luvit-hiredis.o: src/luvit-hiredis.c
-	$(CC) -c src/luvit-hiredis.c ${CFLAGS} -I/usr/local/include/hiredis src/libev.h
+luvit-redis.o: src/luvit-redis.c
+	$(CC) -c src/luvit-redis.c ${CFLAGS} -I/usr/local/include/hiredis src/libev.h
 
-hiredis.luvit: luvit-hiredis.o
-	$(CC) -o hiredis.luvit luvit-hiredis.o ${LIBS} /usr/local/lib/libhiredis.a
+redis.luvit: luvit-redis.o
+	$(CC) -o redis.luvit luvit-redis.o ${LIBS} /usr/local/lib/libhiredis.a
 
 clean:
-	rm -f luvit-hiredis.o hiredis.luvit
+	rm -f luvit-redis.o redis.luvit

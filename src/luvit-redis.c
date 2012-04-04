@@ -6,14 +6,14 @@
 #include "libev.h"
 #include "utils.h"
 
-#define LUVIT_HIREDIS_CONNECTION_MT "luvit-hiredis.connection"
-#define LUAHIREDIS_MAXARGS (256)
+#define LUA_REDIS_CLIENT_MT "lua.redis.client"
+#define LUA_REDIS_MAX_ARGS (256)
 #define LUAHIREDIS_KEY_NIL "NIL"
 
-typedef struct luvitredis_Connection
+typedef struct lua_redis_client_t
 {
-  redisAsyncContext * redisContext;
-} luvitredis_Connection;
+  redisAsyncContext * redis_async_context;
+} lua_redis_client_t;
 
 static int push_error(lua_State * L, redisAsyncContext * pContext)
 {
@@ -93,50 +93,28 @@ static int push_reply(lua_State * L, redisReply * pReply)
   return 1;
 }
 
-void getCallback(redisAsyncContext *c, void *r, void *privdata) {
+//todo can it be static?
+void on_response(redisAsyncContext *c, void *r, void *privdata)
+{
     redisReply *reply = r;
-    luv_ref_t *ff =privdata;
+    luv_ref_t *ref =privdata;
     int i;
 
-    if(ff==NULL)
+    if(ref == NULL)
     {
+      // no callback?
+      //memory leak
       return;
     }
-
-    lua_rawgeti(ff->L, LUA_REGISTRYINDEX, ff->r);
-    i=push_reply(ff->L,reply);
-    luaL_unref(ff->L, LUA_REGISTRYINDEX,ff-> r);
-    luv_acall(ff->L, i, 0, "hiredis_after");
-    free(ff);
+    lua_State* L = ref->L;
+    lua_rawgeti(L, LUA_REGISTRYINDEX, ref->r);
+    i=push_reply(L,reply);
+    luaL_unref(L, LUA_REGISTRYINDEX,ref-> r);
+    luv_acall(L, i, 0, "redis_on_response");
+    free(ref);
 }
-static redisAsyncContext * check_connection(lua_State * L, int idx)
-{
-  luvitredis_Connection * pConn = (luvitredis_Connection *)luaL_checkudata(
-      L, idx, LUVIT_HIREDIS_CONNECTION_MT
-    );
-  if (pConn == NULL)
-  {
-    luaL_error(L, "lua-hiredis error: connection is null");
-    return NULL; /* Unreachable */
-  }
 
-  if (pConn->redisContext == NULL)
-  {
-    luaL_error(
-        L, "lua-hiredis error: attempted to use closed connection"
-      );
-    return NULL; /* Unreachable */
-  }
-
-  return pConn->redisContext;
-}
-static int load_args(
-    lua_State * L,
-    redisAsyncContext * redisContext,
-    int idx, /* index of first argument */
-    const char ** argv,
-    size_t * argvlen
-  )
+static int load_args(lua_State * L, int idx, const char ** argv, size_t * argvlen)
 {
   int nargs = lua_gettop(L) - idx + 1;
   int i = 0;
@@ -146,7 +124,7 @@ static int load_args(
     return luaL_error(L, "missing command name");
   }
 
-  if (nargs > LUAHIREDIS_MAXARGS)
+  if (nargs > LUA_REDIS_MAX_ARGS)
   {
     return luaL_error(L, "too many arguments");
   }
@@ -168,41 +146,59 @@ static int load_args(
   return nargs;
 }
 
-static int lconn_command(lua_State * L)
+static int lua_client_command(lua_State * L)
 {
-  redisAsyncContext * redisContext = check_connection(L, 1);
+  lua_redis_client_t * lua_redis_client = (lua_redis_client_t *)luaL_checkudata(
+                                                    L, 1, LUA_REDIS_CLIENT_MT);
+  if (lua_redis_client == NULL)
+  {
+    luaL_error(L, "lua-redis error: connection is null");
 
-  const char * argv[LUAHIREDIS_MAXARGS];
-  size_t argvlen[LUAHIREDIS_MAXARGS];
+    return NULL; /* Unreachable */
+  }
 
-  luv_ref_t* ref=NULL;
+  if (lua_redis_client->redis_async_context == NULL)
+  {
+    luaL_error(L, "lua-redis error: attempted to use closed connection");
+
+    return NULL; /* Unreachable */
+  }
+
+
+  const char * argv[LUA_REDIS_MAX_ARGS];
+  size_t argvlen[LUA_REDIS_MAX_ARGS];
+
+  luv_ref_t* ref = NULL;
+
   if(lua_isfunction(L,-1))
   {
     ref = (luv_ref_t*)malloc(sizeof(luv_ref_t));
     ref->L = L;
-    lua_pushvalue(L, -1); /* duplicate so we can _ref it */
+    lua_pushvalue(L, -1);
     ref->r = luaL_ref(L, LUA_REGISTRYINDEX);
     lua_pop(L,1);
   }
 
-  int nargs = load_args(L, redisContext, 2, argv, argvlen);
+  int nargs = load_args(L, 2, argv, argvlen);
 
-  redisAsyncCommandArgv(redisContext,getCallback,ref,nargs,argv,argvlen);
+  redisAsyncCommandArgv(
+    lua_redis_client->redis_async_context,on_response,ref,nargs,argv,argvlen);
 
+  //TODO: should we return something here? maybe only error from redisAsyncCommand?
   return 0;
 }
 
 
-static int luv_hiredis_connect(lua_State * L)
+static int lua_create_client(lua_State * L)
 {
-  luvitredis_Connection * luvitConnection = NULL;
-  redisAsyncContext * redisContext = NULL;
+  lua_redis_client_t * lua_redis_client = NULL;
+  redisAsyncContext * redis_async_context = NULL;
 
   const char * host = luaL_checkstring(L, 1);
   int port = luaL_checkint(L, 2);
 
-  redisContext = redisAsyncConnect(host, port);
-  if (!redisContext)
+  redis_async_context = redisAsyncConnect(host, port);
+  if (!redis_async_context)
   {
     lua_pushnil(L);
     lua_pushliteral(L, "failed to create hiredis context");
@@ -210,52 +206,50 @@ static int luv_hiredis_connect(lua_State * L)
     return 2;
   }
 
-  if (redisContext->err)
+  if (redis_async_context->err)
   {
-    int result = push_error(L, redisContext);
+    int result = push_error(L, redis_async_context);
 
-    redisFree(redisContext);
-    redisContext = NULL;
+    redisFree(redis_async_context);
+    redis_async_context = NULL;
 
     return result;
   }
 
-  redisLibevAttach(EV_DEFAULT_ redisContext);
+  redisLibevAttach(EV_DEFAULT_ redis_async_context);
 
-  luvitConnection = (luvitredis_Connection *)lua_newuserdata(
-      L, sizeof(luvitredis_Connection)
-    );
+  lua_redis_client = (lua_redis_client_t *)lua_newuserdata(
+                                          L, sizeof(lua_redis_client_t));
+  lua_redis_client->redis_async_context = redis_async_context;
 
-  luvitConnection->redisContext = redisContext;
-
-  luaL_getmetatable(L, LUVIT_HIREDIS_CONNECTION_MT);
+  luaL_getmetatable(L, LUA_REDIS_CLIENT_MT);
   lua_setmetatable(L, -2);
 
   return 1;
 }
 
-static const luaL_reg connectionMethods []=
+static const luaL_reg redis_client_methods []=
 {
-  {"command",lconn_command},
+  {"command", lua_client_command},
   {NULL, NULL}
 };
 
 static const luaL_reg exports[] =
 {
-  { "connect", luv_hiredis_connect },
+  { "createClient", lua_create_client },
   { NULL, NULL }
 };
 
-LUALIB_API int luaopen_hiredis(lua_State * L)
+LUALIB_API int luaopen_redis(lua_State * L)
 {
-  luaL_newmetatable(L, LUVIT_HIREDIS_CONNECTION_MT);
+  luaL_newmetatable(L, LUA_REDIS_CLIENT_MT);
   lua_pushvalue(L,-1);
   lua_setfield(L, -2, "__index");
-  luaL_register(L,NULL,connectionMethods);
+  luaL_register(L, NULL, redis_client_methods);
 
 
   lua_newtable(L);
-  luaL_register(L,NULL,exports);
+  luaL_register(L, NULL, exports);
 
   return 1;
 }
