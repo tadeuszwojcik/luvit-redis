@@ -5,8 +5,9 @@ all: build/redis.luvit
 
 build/%.luvit: src/%.c
 	mkdir -p build
-
-	$(CC) ${CFLAGS} -I/usr/local/include/hiredis -o $@ $^ ${LIBS} /usr/local/lib/libhiredis.a
+	$(CC) ${CFLAGS} -Ideps/hiredis/ src/luvit-hiredis-adapter.h -o $@ $^ ${LIBS} deps/hiredis/libhiredis.a
 
 clean:
 	rm -fr build
+
+

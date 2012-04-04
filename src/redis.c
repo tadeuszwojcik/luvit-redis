@@ -2,8 +2,7 @@
 #include <lauxlib.h>
 #include "uv.h"
 #include "hiredis.h"
-#include "async.h"
-#include "hiredis/adapters/libev.h"
+#include "luvit-hiredis-adapter.h"
 #include "utils.h"
 
 #define LUA_REDIS_CLIENT_MT "lua.redis.client"
