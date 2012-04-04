@@ -5,7 +5,7 @@ LIBS=$(shell luvit --libs)
 all: hiredis.luvit
 
 luvit-hiredis.o: src/luvit-hiredis.c
-	$(CC) -c src/luvit-hiredis.c ${CFLAGS} -I/usr/local/include/hiredis src/libuv.h
+	$(CC) -c src/luvit-hiredis.c ${CFLAGS} -I/usr/local/include/hiredis src/libev.h
 
 hiredis.luvit: luvit-hiredis.o
 	$(CC) -o hiredis.luvit luvit-hiredis.o ${LIBS} /usr/local/lib/libhiredis.a

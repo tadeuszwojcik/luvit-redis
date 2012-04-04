@@ -3,7 +3,7 @@
 #include "uv.h"
 #include "hiredis.h"
 #include "async.h"
-#include "libuv.h"
+#include "libev.h"
 #include "utils.h"
 
 #define LUVIT_HIREDIS_CONNECTION_MT "luvit-hiredis.connection"
@@ -105,8 +105,9 @@ void getCallback(redisAsyncContext *c, void *r, void *privdata) {
 
     lua_rawgeti(ff->L, LUA_REGISTRYINDEX, ff->r);
     i=push_reply(ff->L,reply);
-
+    luaL_unref(ff->L, LUA_REGISTRYINDEX,ff-> r);
     luv_acall(ff->L, i, 0, "hiredis_after");
+    free(ff);
 }
 static redisAsyncContext * check_connection(lua_State * L, int idx)
 {
@@ -200,7 +201,7 @@ static int luv_hiredis_connect(lua_State * L)
   const char * host = luaL_checkstring(L, 1);
   int port = luaL_checkint(L, 2);
 
-  redisContext = redisConnect(host, port);
+  redisContext = redisAsyncConnect(host, port);
   if (!redisContext)
   {
     lua_pushnil(L);
@@ -219,7 +220,7 @@ static int luv_hiredis_connect(lua_State * L)
     return result;
   }
 
-  redisLibuvAttach(luv_get_loop(L), redisContext);
+  redisLibevAttach(EV_DEFAULT_ redisContext);
 
   luvitConnection = (luvitredis_Connection *)lua_newuserdata(
       L, sizeof(luvitredis_Connection)
