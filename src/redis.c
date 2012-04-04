@@ -3,7 +3,7 @@
 #include "uv.h"
 #include "hiredis.h"
 #include "async.h"
-#include "libev.h"
+#include "hiredis/adapters/libev.h"
 #include "utils.h"
 
 #define LUA_REDIS_CLIENT_MT "lua.redis.client"
