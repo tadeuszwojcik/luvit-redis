@@ -193,8 +193,14 @@ static int lua_create_client(lua_State * L)
   lua_redis_client_t * lua_redis_client = NULL;
   redisAsyncContext * redis_async_context = NULL;
 
-  const char * host = luaL_checkstring(L, 1);
-  int port = luaL_checkint(L, 2);
+  const char * host = "127.0.0.1";
+  int port = 6379;
+
+  if(lua_isstring(L,1) && lua_isnumber(L,2))
+  {
+    host = luaL_checkstring(L, 1);
+    port = luaL_checkint(L, 2);
+  }
 
   redis_async_context = redisAsyncConnect(host, port);
   if (!redis_async_context)

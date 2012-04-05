@@ -1,6 +1,6 @@
 local redis = require('redis')
 
-local client = assert(redis.createClient("127.0.0.1", 6379))
+local client = assert(redis.createClient())
 client:command("SET","A","B",function(response)
   print(response)
 end)
@@ -8,3 +8,4 @@ end)
 client:command("GET","A",function(response)
   print(response)
 end)
+
