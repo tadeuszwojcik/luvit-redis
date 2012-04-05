@@ -1,4 +1,3 @@
--- Load our native module
 local redis = require('./')
 
 local client = assert(redis.createClient("127.0.0.1", 6379))
