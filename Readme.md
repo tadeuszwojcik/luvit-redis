@@ -16,3 +16,11 @@ client:sadd("myset","first","second","third", function()
   end)
 end)
 ```
+
+## TODO
+* redis lua scripting api
+* cleanups in redis.c
+* review error handling
+* callbacks for connect disconnect
+* unit tests
+* automatic reconnect on disconnect
