@@ -32,15 +32,18 @@ static int push_error(lua_State * L, redisAsyncContext * pContext)
 static int push_reply(lua_State * L, redisReply * pReply)
 {
   /* int base = lua_gettop(L); */
-
+  if(pReply->type==REDIS_REPLY_ERROR)
+  {
+    luv_push_async_error_raw(L,"pReply->err",pReply->str,"redis_on_response","redis_on_response");
+    return 1;
+  }
+  lua_pushnil(L);
   switch(pReply->type)
   {
     case REDIS_REPLY_STATUS:
-    case REDIS_REPLY_ERROR:
 
-      lua_pushlstring(L, pReply->str, pReply->len); /* status */
-
-      break;
+    lua_pushlstring(L, pReply->str, pReply->len); /* status */
+    break;
 
     case REDIS_REPLY_INTEGER:
       lua_pushinteger(L, pReply->integer);
@@ -89,7 +92,7 @@ static int push_reply(lua_State * L, redisReply * pReply)
   * Always returning a single value.
   * If changed, change REDIS_REPLY_ARRAY above.
   */
-  return 1;
+  return 2;
 }
 
 //todo can it be static?
