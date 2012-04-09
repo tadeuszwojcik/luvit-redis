@@ -1,1 +1,1 @@
-return require('../../build/redis')
+return require('./redis')
