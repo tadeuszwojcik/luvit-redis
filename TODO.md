@@ -1,7 +1,6 @@
 ## TODO
-* better response handling
-* cleanups in redis.c
-* unit tests
 * redis lua scripting api
+* cleanups in redis.c
 * callbacks for connect disconnect
+* unit tests
 * automatic reconnect on disconnect

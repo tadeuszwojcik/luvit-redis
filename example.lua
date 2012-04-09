@@ -1,17 +1,10 @@
 local redisClient = require('redis')
 
+local client = redisClient:new()
 
-local client = assert(redisClient:new())
-client:set("A","B",function(err,response)
-  if(err) then
-    print("error")
-    print(err)
-  else
-    print(response)
-    client:get("A",function(err,response)
-      print(response)
+client:sadd("myset","first","second","third", function()
+
+  client:smembers("myset",function(err,res)
+    for k,v in pairs(res) do print(k,v) end
   end)
-  end
 end)
-
-
