@@ -1,5 +1,5 @@
 ## TODO
-* create client with default host and port pointing to standrad local redis port
+
 * better response handling
 * cleanups in redis.c
 * unit tests
