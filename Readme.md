@@ -37,4 +37,4 @@ end)
 License
 -------
 
-[MIT](luvit-redis/LICENSE)
+[MIT](/LICENSE)
