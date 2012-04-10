@@ -2,10 +2,12 @@ local redisNativeClient = require('../../build/redis')
 local commands = require('./commands')
 local Object = require('core').Object
 local fs = require("fs")
+
 local RedisClient = Object:extend()
 RedisClient.lua={}
 for index, value in ipairs(commands) do
   RedisClient[value] = function(self, ...)
+
     self.redisNativeClient:command(value, ...)
     end
 
@@ -29,6 +31,10 @@ function RedisClient:registerCommand(commandName, scriptFilePath, numOfKeys, cal
 
 end
 
+function RedisClient:command(...)
+
+  self.redisNativeClient:command(...)
+end
 
 
 
