@@ -25,6 +25,11 @@ end)
 ## TODO
 * cleanups in redis.c
 * review error handling
-* callbacks for connect disconnect
+* callbacks for connect disconnect (client:on("disconnect"...),client:on("connect" ...))
+* callback for error (client:on("error" ...))
 * unit tests
-* automatic reconnect on disconnect
+* client auth
+* docs
+* more examples
+* benchmarks
+* automatic reconnect on disconnect (queuing commands?)
