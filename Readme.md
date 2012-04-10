@@ -37,4 +37,4 @@ end)
 License
 -------
 
-[MIT](luvit-redis/license.txt)
+[MIT](luvit-redis/LICENSE)
