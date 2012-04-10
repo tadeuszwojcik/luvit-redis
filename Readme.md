@@ -23,6 +23,7 @@ end)
 
 ```
 ## BENCHMARK (benchmark.lua)
+```
 
           PING        1/10   3.65s total,   27397.26 ops/sec
           PING       50/10   0.52s total,  192307.69 ops/sec
