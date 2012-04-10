@@ -1,6 +1,6 @@
 return
 {
-  "append",
+  "append2",
   "auth",
   "bgrewriteaof",
   "bgsave",
