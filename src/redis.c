@@ -35,8 +35,11 @@ static int push_reply(lua_State * L, redisReply * pReply)
   switch(pReply->type)
   {
     case REDIS_REPLY_ERROR:
-      lua_pop(L,1);
+
+
+    lua_pop(L,1);
       luv_push_async_error_raw(L,"pReply->err",pReply->str,"redis_on_response","redis_on_response");
+      lua_pushnil(L);
       break;
     case REDIS_REPLY_STATUS:
 
@@ -110,7 +113,9 @@ void on_response(redisAsyncContext *c, void *r, void *privdata)
     lua_rawgeti(L, LUA_REGISTRYINDEX, ref->r);
     lua_pushnil(L);
     i=push_reply(L,reply);
+
     luaL_unref(L, LUA_REGISTRYINDEX,ref-> r);
+
     luv_acall(L, i+1, 0, "redis_on_response");
     free(ref);
 }
