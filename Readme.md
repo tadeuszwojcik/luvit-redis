@@ -23,7 +23,6 @@ end)
 ```
 
 ## TODO
-* redis lua scripting api
 * cleanups in redis.c
 * review error handling
 * callbacks for connect disconnect
