@@ -33,3 +33,8 @@ end)
 * more examples
 * benchmarks
 * automatic reconnect on disconnect (queuing commands?)
+
+License
+-------
+
+[MIT](luvit-redis/license.txt)
