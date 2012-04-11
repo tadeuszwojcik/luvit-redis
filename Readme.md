@@ -158,7 +158,6 @@ GET large str, 100000/10 min/max/avg/p95:  280/3312/1821.58/2937.20   3409ms tot
 * client auth
 * docs
 * more examples
-* benchmarks
 * automatic reconnect on disconnect (queuing commands?)
 
 License
