@@ -25,7 +25,8 @@ end)
 #BENCHMARKS (comparison of node-redis and luvit-redis).
 
 ## BENCHMARK (benchmark.lua) 
-x/yy x - pipeline size, yy - num of clients 
+x/yy x - pipeline size, yy - num of clients
+
 ```
 
           PING        1/10   3.65s total,   27397.26 ops/sec
@@ -87,6 +88,7 @@ x/yy x - pipeline size, yy - num of clients
 
 ## BENCHMARK (multi_bench.js)
 x/yy x- pipeline size, yy - num of clients
+
 ```
 Client count: 10, node version: 0.7.6, server version: 2.9.6, parser: hiredis
          PING,     1/10 min/max/avg/p95:    0/   4/   0.05/   1.00   5581ms total, 17917.94 ops/sec
