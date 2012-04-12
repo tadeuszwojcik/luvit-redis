@@ -166,6 +166,17 @@ GET large str, 100000/10 min/max/avg/p95:  280/3312/1821.58/2937.20   3409ms tot
 
 License
 -------
+Thanks to Salvatore Sanfilippo for creating Redis in first place and hiredis driver, 
+Matt Ranney for creating node-redis, 
+Alexander Gladysh for creating lua hiredis,
+Tim Caswell for creating luvit,
+and Vladimir Dronnikov for all help as without him that module wouln't never happen.
+
+
+
+
+License
+-------
 
 (The MIT License)
 
