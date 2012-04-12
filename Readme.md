@@ -170,8 +170,8 @@ Thanks to Salvatore Sanfilippo for creating Redis in first place and hiredis dri
 Matt Ranney for creating node-redis, 
 Alexander Gladysh for creating lua hiredis,
 Tim Caswell for creating luvit,
-and Vladimir Dronnikov for all help as without him that module wouln't never happen.
-Thank you all.
+and Vladimir Dronnikov for all help as without him that module would never happen.
+Thank you all!
 
 
 
