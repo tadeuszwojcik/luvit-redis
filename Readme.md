@@ -24,7 +24,9 @@ end)
 ```
 #BENCHMARKS (comparison of node-redis and luvit-redis).
 
-## BENCHMARK (benchmark.lua)
+## BENCHMARK (benchmark.lua) 
+x/yy x - pipeline size, yy - num of clients
+
 ```
 
           PING        1/10   3.65s total,   27397.26 ops/sec
@@ -85,6 +87,8 @@ end)
 ```
 
 ## BENCHMARK (multi_bench.js)
+x/yy x- pipeline size, yy - num of clients
+
 ```
 Client count: 10, node version: 0.7.6, server version: 2.9.6, parser: hiredis
          PING,     1/10 min/max/avg/p95:    0/   4/   0.05/   1.00   5581ms total, 17917.94 ops/sec
@@ -158,8 +162,19 @@ GET large str, 100000/10 min/max/avg/p95:  280/3312/1821.58/2937.20   3409ms tot
 * client auth
 * docs
 * more examples
-* benchmarks
 * automatic reconnect on disconnect (queuing commands?)
+
+Credits
+-------
+Thanks to Salvatore Sanfilippo for creating Redis in first place and hiredis driver, 
+Matt Ranney for creating node-redis, 
+Alexander Gladysh for creating lua hiredis,
+Tim Caswell for creating luvit,
+and Vladimir Dronnikov for all help as without him that module would never happen.
+Thank you all!
+
+
+
 
 License
 -------
