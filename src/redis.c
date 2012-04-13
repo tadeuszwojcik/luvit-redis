@@ -4,7 +4,7 @@
 #include "hiredis.h"
 #include "luvit-hiredis-adapter.h"
 #include "utils.h"
-
+#include "luv_handle.h"
 #define LUA_REDIS_CLIENT_MT "lua.redis.client"
 #define LUA_REDIS_MAX_ARGS (256)
 #define LUAHIREDIS_KEY_NIL "NIL"
@@ -14,20 +14,6 @@ typedef struct lua_redis_client_t
   redisAsyncContext * redis_async_context;
 } lua_redis_client_t;
 
-static int push_error(lua_State * L, redisAsyncContext * pContext)
-{
-  /* TODO: Use errno if err is REDIS_ERR_IO */
-  lua_pushnil(L);
-  lua_pushstring(
-      L,
-      (pContext->errstr != NULL)
-        ? pContext->errstr
-        : "(lua-hiredis: no error message)" /* TODO: ?! */
-    );
-  lua_pushnumber(L, pContext->err);
-
-  return 3;
-}
 
 static int push_reply(lua_State * L, redisReply * pReply)
 {
@@ -79,7 +65,7 @@ static int push_reply(lua_State * L, redisReply * pReply)
     }
 
     default: /* should not happen */
-      return luaL_error(L, "command: unknown reply type: %d", pReply->type);
+            return luaL_error(L, "command: unknown reply type: %d", pReply->type);
   }
 
   /*
@@ -105,19 +91,36 @@ void on_response(redisAsyncContext *c, void *r, void *privdata)
 
     if(ref == NULL)
     {
-      // no callback?
-      //memory leak
       return;
     }
-    lua_State* L = ref->L;
-    lua_rawgeti(L, LUA_REGISTRYINDEX, ref->r);
-    lua_pushnil(L);
+       lua_State* L = ref->L;
+
+lua_rawgeti(L, LUA_REGISTRYINDEX, ref->r);
+
+
+if (r==NULL)
+{
+  luv_push_async_error_raw(L,"pReply->err",c->errstr,"redis_on_response","redis_on_response");
+  lua_pushnil(L);
+luv_acall(L, 2, 0, "redis_on_response");
+}
+else
+{
+
+
+
+
+
+   lua_pushnil(L);
     i=push_reply(L,reply);
 
-    luaL_unref(L, LUA_REGISTRYINDEX,ref-> r);
+
 
     luv_acall(L, i+1, 0, "redis_on_response");
-    free(ref);
+
+  }
+  luaL_unref(L, LUA_REGISTRYINDEX,ref-> r);
+      free(ref);
 }
 
 static int load_args(lua_State * L, int idx, const char ** argv, size_t * argvlen)
@@ -154,19 +157,19 @@ static int load_args(lua_State * L, int idx, const char ** argv, size_t * argvle
 
 static int lua_client_command(lua_State * L)
 {
+
   lua_redis_client_t * lua_redis_client = (lua_redis_client_t *)luaL_checkudata(
                                                     L, 1, LUA_REDIS_CLIENT_MT);
   if (lua_redis_client == NULL)
   {
-    luaL_error(L, "lua-redis error: connection is null");
+  luv_emit_event(L, "error", 0);
 
     return 0; /* Unreachable */
   }
 
   if (lua_redis_client->redis_async_context == NULL)
   {
-    luaL_error(L, "lua-redis error: attempted to use closed connection");
-
+luv_emit_event(L, "error", 0);
     return 0; /* Unreachable */
   }
 
@@ -194,55 +197,198 @@ static int lua_client_command(lua_State * L)
   return 0;
 }
 
+void connectCallback(const redisAsyncContext *c, int status) {
+  luv_ref_t* ref = c->data;
+  lua_State *L = ref->L;
+
+  lua_rawgeti(L, LUA_REGISTRYINDEX, ref->r);
+
+
+
+    if (status != REDIS_OK)
+    {
+      luv_emit_event(L, "error", 0);
+    }
+    else
+    {
+      luv_emit_event(L, "connect", 0);
+    }
+
+
+}
+void disconnectCallback(const redisAsyncContext *c, int status) {
+
+     luv_ref_t* ref = c->data;
+    lua_State *L = ref->L;
+
+   lua_rawgeti(L, LUA_REGISTRYINDEX, ref->r);
+
+     if (status != REDIS_OK) {
+      luv_emit_event(L, "error", 0);
+    }
+    else
+    {
+      luv_emit_event(L, "disconnect", 0);
+    }
+
+}
 
 static int lua_create_client(lua_State * L)
 {
   lua_redis_client_t * lua_redis_client = NULL;
   redisAsyncContext * redis_async_context = NULL;
-
-  const char * host = "127.0.0.1";
-  int port = 6379;
-
-  if(lua_isstring(L,1) && lua_isnumber(L,2))
-  {
-    host = luaL_checkstring(L, 1);
-    port = luaL_checkint(L, 2);
-  }
+  luv_ref_t* ref;
+  const char * host = luaL_checkstring(L, 1);
+  int port = luaL_checkint(L, 2);
 
   redis_async_context = redisAsyncConnect(host, port);
-  if (!redis_async_context)
-  {
-    lua_pushnil(L);
-    lua_pushliteral(L, "failed to create hiredis context");
 
-    return 2;
-  }
 
-  if (redis_async_context->err)
-  {
-    int result = push_error(L, redis_async_context);
+  // TODO: should we check redis_async_context->err here
+  // or redisAsyncSetConnectCallback will handle all errors ?
 
-    redisAsyncFree(redis_async_context);
-    redis_async_context = NULL;
-
-    return result;
-  }
 
   redisLibevAttach(EV_DEFAULT_ redis_async_context);
 
   lua_redis_client = (lua_redis_client_t *)lua_newuserdata(
                                           L, sizeof(lua_redis_client_t));
+
+
   lua_redis_client->redis_async_context = redis_async_context;
 
   luaL_getmetatable(L, LUA_REDIS_CLIENT_MT);
   lua_setmetatable(L, -2);
 
+    /* Create a local environment for storing stuff */
+  lua_newtable(L);
+  lua_setfenv (L, -2);
+
+  /* Store a reference to the userdata in the handle */
+  ref = (luv_ref_t*)malloc(sizeof(luv_ref_t));
+  ref->L = L;
+  lua_pushvalue(L, -1); /* duplicate so we can _ref it */
+  ref->r = luaL_ref(L, LUA_REGISTRYINDEX);
+  redis_async_context->data = ref;
+
   return 1;
+}
+
+static int lua_client_on_connect(lua_State * L)
+{
+  lua_redis_client_t * lua_redis_client = (lua_redis_client_t *)luaL_checkudata(
+                                                    L, 1, LUA_REDIS_CLIENT_MT);
+  if (lua_redis_client == NULL)
+  {
+    fprintf(stderr, "ERROR d1\n");
+
+
+    return 0; /* Unreachable */
+  }
+
+  if (lua_redis_client->redis_async_context == NULL)
+  {
+    fprintf(stderr, "ERROR d1\n");
+
+
+    return 0; /* Unreachable */
+  }
+
+  luv_register_event(L, 1, "connect", 2);
+
+  redisAsyncSetConnectCallback(lua_redis_client->redis_async_context,connectCallback);
+
+  return 0;
+
+
+}
+
+static int lua_client_on_disconnect(lua_State * L)
+{
+  lua_redis_client_t * lua_redis_client = (lua_redis_client_t *)luaL_checkudata(
+                                                    L, 1, LUA_REDIS_CLIENT_MT);
+  if (lua_redis_client == NULL)
+  {
+    luv_emit_event(L, "error", 0);
+
+
+    return 0; /* Unreachable */
+  }
+
+  if (lua_redis_client->redis_async_context == NULL)
+  {
+   luv_emit_event(L, "error", 0);
+
+
+    return 0; /* Unreachable */
+  }
+
+  luv_register_event(L, 1, "disconnect", 2);
+
+redisAsyncSetDisconnectCallback(lua_redis_client->redis_async_context,disconnectCallback);
+
+  return 0;
+
+
+}
+
+static int lua_client_on_error(lua_State * L)
+{
+  lua_redis_client_t * lua_redis_client = (lua_redis_client_t *)luaL_checkudata(
+                                                    L, 1, LUA_REDIS_CLIENT_MT);
+  if (lua_redis_client == NULL)
+  {
+   luv_emit_event(L, "error", 0);
+
+
+
+    return 0; /* Unreachable */
+  }
+
+  if (lua_redis_client->redis_async_context == NULL)
+  {
+    luv_emit_event(L, "error", 0);
+
+
+    return 0; /* Unreachable */
+  }
+
+  luv_register_event(L, 1, "error", 2);
+
+  return 0;
+}
+
+static int lua_client_disconnect(lua_State * L)
+{
+  lua_redis_client_t * lua_redis_client = (lua_redis_client_t *)luaL_checkudata(
+                                                    L, 1, LUA_REDIS_CLIENT_MT);
+  if (lua_redis_client == NULL)
+  {
+    luv_emit_event(L, "error", 0);
+
+
+    return 0; /* Unreachable */
+  }
+
+  if (lua_redis_client->redis_async_context == NULL)
+  {
+    luv_emit_event(L, "error", 0);
+
+
+    return 0; /* Unreachable */
+  }
+
+  redisAsyncDisconnect(lua_redis_client->redis_async_context);
+
+  return 0;
 }
 
 static const luaL_reg redis_client_methods []=
 {
   {"command", lua_client_command},
+  {"disconnect", lua_client_disconnect},
+  {"onConnect", lua_client_on_connect},
+  {"onDisconnect", lua_client_on_disconnect},
+  {"onError", lua_client_on_error},
   {NULL, NULL}
 };
 
@@ -258,7 +404,6 @@ LUALIB_API int luaopen_redis(lua_State * L)
   lua_pushvalue(L,-1);
   lua_setfield(L, -2, "__index");
   luaL_register(L, NULL, redis_client_methods);
-
 
   lua_newtable(L);
   luaL_register(L, NULL, exports);

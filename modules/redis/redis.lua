@@ -1,9 +1,9 @@
 local redisNativeClient = require('../../build/redis')
 local commands = require('./commands')
-local Object = require('core').Object
+local Emitter = require('core').Emitter
 local fs = require("fs")
 
-local RedisClient = Object:extend()
+local RedisClient = Emitter:extend()
 RedisClient.lua={}
 for index, value in ipairs(commands) do
   RedisClient[value] = function(self, ...)
@@ -35,11 +35,29 @@ function RedisClient:command(...)
 
   self.redisNativeClient:command(...)
 end
+function RedisClient:disconnect(...)
 
+  self.redisNativeClient:disconnect()
+end
 
 
 function RedisClient:initialize(host, port)
+  host = host or "127.0.0.1"
+  port = port or 6379
+
   self.redisNativeClient = redisNativeClient.createClient(host,port)
+
+  self.redisNativeClient:onError(function()
+    self:emit("error")
+ end)
+
+  self.redisNativeClient:onConnect(function()
+    self:emit("connect")
+  end)
+
+  self.redisNativeClient:onDisconnect(function()
+    self:emit("disconnect")
+  end)
 end
 
 return RedisClient
