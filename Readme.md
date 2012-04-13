@@ -154,8 +154,6 @@ GET large str, 100000/10 min/max/avg/p95:  280/3312/1821.58/2937.20   3409ms tot
 
 ```
 ## TODO
-* cleanups in redis.c
-* review error handling
 * unit tests
 * client auth
 * docs
