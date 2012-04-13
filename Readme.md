@@ -24,7 +24,7 @@ end)
 ```
 #BENCHMARKS (comparison of node-redis and luvit-redis).
 
-## BENCHMARK (benchmark.lua) 
+## BENCHMARK (benchmark.lua)
 x/yy x - pipeline size, yy - num of clients
 
 ```
@@ -156,8 +156,6 @@ GET large str, 100000/10 min/max/avg/p95:  280/3312/1821.58/2937.20   3409ms tot
 ## TODO
 * cleanups in redis.c
 * review error handling
-* callbacks for connect disconnect (client:on("disconnect"...),client:on("connect" ...))
-* callback for error (client:on("error" ...))
 * unit tests
 * client auth
 * docs
@@ -166,8 +164,8 @@ GET large str, 100000/10 min/max/avg/p95:  280/3312/1821.58/2937.20   3409ms tot
 
 Credits
 -------
-Thanks to Salvatore Sanfilippo for creating Redis in first place and hiredis driver, 
-Matt Ranney for creating node-redis, 
+Thanks to Salvatore Sanfilippo for creating Redis in first place and hiredis driver,
+Matt Ranney for creating node-redis,
 Alexander Gladysh for creating lua hiredis,
 Tim Caswell for creating luvit,
 and Vladimir Dronnikov for all help as without him that module would never happen.
