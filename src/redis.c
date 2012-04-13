@@ -401,11 +401,16 @@ static const luaL_reg exports[] =
 LUALIB_API int luaopen_redis(lua_State * L)
 {
   luaL_newmetatable(L, LUA_REDIS_CLIENT_MT);
-  lua_pushvalue(L,-1);
+  lua_pushvalue(L, -1);
   lua_setfield(L, -2, "__index");
   luaL_register(L, NULL, redis_client_methods);
 
   lua_newtable(L);
+  char buf[50];
+  sprintf(buf, "%d.%d.%d", HIREDIS_MAJOR, HIREDIS_MINOR, HIREDIS_PATCH);
+  lua_pushstring(L, buf);
+  lua_setfield(L, -2, "version");
+
   luaL_register(L, NULL, exports);
 
   return 1;
