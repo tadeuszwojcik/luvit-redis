@@ -20,16 +20,14 @@ local redis = require('redis')
 
 local client = redis:new()
 
-client:sadd("myset","first","second","third", function()
-
-  client:smembers("myset",function(err,res)
-    for k,v in pairs(res) do print(k,v) end
-  end)
-
-end)
-
-client:info(function(err,res)
-  print(res)
+client:set('test-key','luvit-rocks',function(err, res)
+  if err then
+    print(err)
+  else
+    client:get('test-key',function(err, res)
+      print(res)
+    end)
+  end
 end)
 
 ```
