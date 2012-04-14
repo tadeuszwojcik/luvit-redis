@@ -151,7 +151,6 @@ static int push_command_args(lua_State * L,
 
 static int lua_client_command(lua_State * L)
 {
-
   lua_redis_client_t *lua_redis_client = (lua_redis_client_t *)
                                     luaL_checkudata(L, 1, LUA_REDIS_CLIENT_MT);
 
@@ -188,10 +187,12 @@ static int lua_client_command(lua_State * L)
 
   if(commandStatus != REDIS_OK)
   {
-    luv_push_async_hiredis_error(L,
-                                 lua_redis_client->redis_async_context,
-                                 "client_command");
-    luv_emit_event(L, "error", 1);
+    lua_rawgeti(L, LUA_REGISTRYINDEX, ref->r);
+    luv_push_async_error_raw(L, NULL, "Redis connection problem", "client_command", NULL);
+    lua_pushnil(L);
+    lua_call(L, 2, 0);
+    luaL_unref(L, LUA_REGISTRYINDEX, ref-> r);
+    free(ref);
   }
 
   return 0;
@@ -306,6 +307,7 @@ static int lua_create_client(lua_State * L)
 
   if(redis_async_context->err)
   {
+    redisAsyncFree(redis_async_context);
     return luaL_error(L, redis_async_context->errstr);
   }
 
