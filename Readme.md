@@ -1,5 +1,5 @@
 luvit-redis - a luvit redis client.
--------
+=============
 
 This is a redis client for luvit which under the hood uses offical hiredis c library
 what makes it pretty fast (see benchmarks below).
@@ -48,7 +48,7 @@ BENCHMARKS (comparison of node-redis and luvit-redis).
 Benchmark performed on single box, on Intel I7 i920 .
 
 
-### BENCHMARK (benchmark.lua)
+### BENCHMARK (benchmark.lua) - luvit
 
 x/yy x - pipeline size, yy - num of clients
 
@@ -110,7 +110,7 @@ x/yy x - pipeline size, yy - num of clients
     LRANGE 100   100000/10   1.99s total,   50251.26 ops/sec
 ```
 
-### BENCHMARK (multi_bench.js)
+### BENCHMARK (multi_bench.js) - node.js
 x/yy x- pipeline size, yy - num of clients
 
 ```
