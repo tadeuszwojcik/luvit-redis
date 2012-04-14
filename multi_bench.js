@@ -82,7 +82,7 @@ Test.prototype.new_client = function (id) {
 };
 
 Test.prototype.on_clients_ready = function () {
-    process.stdout.write(lpad(this.args.descr, 13) + ", " + lpad(this.args.pipeline, 5) + "/" + this.clients_ready + " ");
+    process.stdout.write(lpad(this.args.descr, 14) + lpad(this.args.pipeline, 9) + "/" + this.clients_ready + "");
     this.test_start = Date.now();
 
     this.fill_pipeline();
@@ -136,7 +136,7 @@ Test.prototype.send_next = function () {
 Test.prototype.print_stats = function () {
     var duration = Date.now() - this.test_start;
 
-    console.log("min/max/avg/p95: " + this.command_latency.print_line() + " " + lpad(duration, 6) + "ms total, " +
+    console.log(lpad(duration, 6) + "ms total, " +
         lpad((num_requests / (duration / 1000)).toFixed(2), 8) + " ops/sec");
 };
 
