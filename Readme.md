@@ -45,7 +45,7 @@ TODO
 BENCHMARKS (comparison of node-redis and luvit-redis).
 -------
 
-Benchmark performed on single box, on Intel I7 i920 .
+Benchmark performed on single box, on Intel I7 i920.
 
 
 ### BENCHMARK (benchmark.lua) - luvit
@@ -114,7 +114,9 @@ x/yy x - pipeline size, yy - num of clients
 x/yy x- pipeline size, yy - num of clients
 
 ```
-Client count: 10, node version: 0.7.6, server version: 2.9.6, parser: hiredis
+Client count: 10, node version: 0.7.6, server version: 2.9.6
+parser: hiredis
+
           PING        1/10  5549ms total, 18021.27 ops/sec
           PING       50/10  3385ms total, 29542.10 ops/sec
           PING      200/10  3304ms total, 30266.34 ops/sec
