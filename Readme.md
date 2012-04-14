@@ -1,7 +1,19 @@
-Async hiredis bindings for Luvit
-=====
+luvit-redis - a luvit redis client.
+===================================
 
-Example usage:
+This is a redis client for luvit which under the hood uses offical hiredis c library
+what makes it pretty fast (see benchmarks below).
+
+Installation
+============
+
+###from git
+
+    git clone https://github.com/twojcik/luvit-redis
+    make
+
+Usage:
+=============
 
 ```lua
 local redis = require('redis')
