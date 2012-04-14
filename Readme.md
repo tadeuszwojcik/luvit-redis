@@ -24,6 +24,9 @@ end)
 ```
 #BENCHMARKS (comparison of node-redis and luvit-redis).
 
+Benchmark performed on single box, on Intel I7 i920 .
+
+
 ## BENCHMARK (benchmark.lua)
 x/yy x - pipeline size, yy - num of clients
 
@@ -161,6 +164,8 @@ GET large str, 100000/10 min/max/avg/p95:  280/3312/1821.58/2937.20   3409ms tot
 * more examples
 * automatic reconnect on disconnect (queuing commands?)
 * c optimizations ? (-O3 ?)
+
+
 Credits
 -------
 Thanks to Salvatore Sanfilippo for creating Redis in first place and hiredis driver,
