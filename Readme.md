@@ -1,4 +1,4 @@
-luvit-redis - a luvit redis client.
+luvit-redis - luvit redis client.
 =============
 
 This is a redis client for luvit which under the hood uses offical hiredis c library
