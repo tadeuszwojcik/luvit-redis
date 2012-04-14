@@ -1,8 +1,7 @@
-Hiredis bindings for Luvit
+Async hiredis bindings for Luvit
 =====
-STATUS: WORK IN PROGRESS
 
-Example:
+Example usage:
 
 ```lua
 local redis = require('redis')
@@ -22,12 +21,22 @@ client:info(function(err,res)
 end)
 
 ```
-#BENCHMARKS (comparison of node-redis and luvit-redis).
+
+## TODO
+
+* docs
+* more examples
+* unit tests
+* client auth
+* c optimizations ? (-O3 ?)
+
+
+##BENCHMARKS (comparison of node-redis and luvit-redis).
 
 Benchmark performed on single box, on Intel I7 i920 .
 
 
-## BENCHMARK (benchmark.lua)
+### BENCHMARK (benchmark.lua)
 x/yy x - pipeline size, yy - num of clients
 
 ```
@@ -89,7 +98,7 @@ x/yy x - pipeline size, yy - num of clients
 
 ```
 
-## BENCHMARK (multi_bench.js)
+### BENCHMARK (multi_bench.js)
 x/yy x- pipeline size, yy - num of clients
 
 ```
@@ -156,13 +165,7 @@ GET large str, 100000/10 min/max/avg/p95:  280/3312/1821.58/2937.20   3409ms tot
    LRANGE 100, 100000/10 min/max/avg/p95: 1588/5047/3470.49/4641.20   5425ms total, 18433.18 ops/sec
 
 ```
-## TODO
 
-* unit tests
-* client auth
-* docs
-* more examples
-* c optimizations ? (-O3 ?)
 
 
 Credits
