@@ -35,6 +35,12 @@ typedef struct lua_redis_client_t
   redisAsyncContext *redis_async_context;
 } lua_redis_client_t;
 
+typedef struct
+{
+ lua_State* L;
+  int r;
+} luv_ref_t;
+
 static void luv_push_async_hiredis_error(lua_State *L,
                                          const redisAsyncContext *context,
                                          const char* source)
