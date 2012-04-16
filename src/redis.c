@@ -83,10 +83,10 @@ static int push_reply(lua_State *L, redisReply *redisReply)
       unsigned int i;
       lua_createtable(L, redisReply->elements, 0);
 
-      for (i = 1; i <= redisReply->elements; ++i)
+      for (i = 0; i < redisReply->elements; ++i)
       {
         push_reply(L, redisReply->element[i]);
-        lua_rawseti(L, -2, i); /* Store sub-reply */
+        lua_rawseti(L, -2, i + 1); /* Store sub-reply */
       }
 
       break;
