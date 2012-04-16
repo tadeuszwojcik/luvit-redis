@@ -214,7 +214,7 @@ Note that "error" is a special event type in luvit.  If there are no listeners f
 ### redis:new(port, host, autoReconnect)
 
 Create a new client connection.  `port` defaults to `6379` and `host` defaults
-to `127.0.0.1`.  If you have `redis-server` running on the same computer as node, then the defaults for
+to `127.0.0.1`.  If you have `redis-server` running on the same computer as luvit, then the defaults for
 port and host are probably fine.
 
 #### autoReconnect
