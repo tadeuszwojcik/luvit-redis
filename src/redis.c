@@ -21,6 +21,7 @@
 
 #include <lua.h>
 #include <lauxlib.h>
+
 #include "hiredis.h"
 #include "luvit-hiredis-adapter.h"
 #include "uv.h"
@@ -28,6 +29,8 @@
 #include "luv_handle.h"
 
 #define LUA_REDIS_CLIENT_MT "lua.redis.client"
+
+// DVV: hmmm. this limit should be put in readme then?
 #define LUA_REDIS_MAX_ARGS (256)
 
 typedef struct lua_redis_client_t
@@ -37,7 +40,7 @@ typedef struct lua_redis_client_t
 
 typedef struct
 {
- lua_State* L;
+  lua_State *L;
   int r;
 } luv_ref_t;
 
@@ -48,12 +51,13 @@ static void luv_push_async_hiredis_error(lua_State *L,
   luv_push_async_error_raw(L, NULL, context->errstr, source, NULL);
 }
 
-static int push_reply(lua_State * L, redisReply *redisReply)
+static int push_reply(lua_State *L, redisReply *redisReply)
 {
   switch(redisReply->type)
   {
     case REDIS_REPLY_ERROR:
       lua_pop(L, 1);
+      // DVV: FIXME: shouldn't we return 2 for 2 results? OTOH, what's the sense of passing nil?
       luv_push_async_error_raw(L, NULL, redisReply->str, "push_reply", NULL);
       lua_pushnil(L);
       break;
@@ -76,13 +80,13 @@ static int push_reply(lua_State * L, redisReply *redisReply)
 
     case REDIS_REPLY_ARRAY:
     {
-      unsigned int i = 0;
+      unsigned int i;
       lua_createtable(L, redisReply->elements, 0);
 
-      for (i = 0; i < redisReply->elements; ++i)
+      for (i = 1; i <= redisReply->elements; ++i)
       {
         push_reply(L, redisReply->element[i]);
-        lua_rawseti(L, -2, i + 1); /* Store sub-reply */
+        lua_rawseti(L, -2, i); /* Store sub-reply */
       }
 
       break;
@@ -95,13 +99,16 @@ static int push_reply(lua_State * L, redisReply *redisReply)
   return 1;
 }
 
-void on_redis_response(redisAsyncContext *context, void *reply, void *privdata)
+static void on_redis_response(redisAsyncContext *context, void *reply, void *privdata)
 {
   redisReply *redisReply = reply;
   luv_ref_t *ref = privdata;
   int replyArgsCount;
+
   lua_State *L = ref->L;
   lua_rawgeti(L, LUA_REGISTRYINDEX, ref->r);
+  luaL_unref(L, LUA_REGISTRYINDEX, ref->r);
+  free(ref);
 
   if (redisReply == NULL)
   {
@@ -115,18 +122,15 @@ void on_redis_response(redisAsyncContext *context, void *reply, void *privdata)
     replyArgsCount = push_reply(L, redisReply);
     luv_acall(L, replyArgsCount + 1, 0, "on_redis_response");
   }
-
-  luaL_unref(L, LUA_REGISTRYINDEX,ref-> r);
-  free(ref);
 }
 
-static int push_command_args(lua_State * L,
+static int push_command_args(lua_State *L,
                              int idx,
-                             const char ** argv,
-                             size_t * argvlen)
+                             const char **argv,
+                             size_t *argvlen)
 {
   int nargs = lua_gettop(L) - idx + 1;
-  int i = 0;
+  int i;
 
   if (nargs <= 0)
   {
@@ -141,7 +145,7 @@ static int push_command_args(lua_State * L,
   for (i = 0; i < nargs; ++i)
   {
     size_t len = 0;
-    const char * str = lua_tolstring(L, idx + i, &len);
+    const char *str = lua_tolstring(L, idx + i, &len);
 
     if (str == NULL)
     {
@@ -155,7 +159,7 @@ static int push_command_args(lua_State * L,
   return nargs;
 }
 
-static int lua_client_command(lua_State * L)
+static int lua_client_command(lua_State *L)
 {
   lua_redis_client_t *lua_redis_client = (lua_redis_client_t *)
                                     luaL_checkudata(L, 1, LUA_REDIS_CLIENT_MT);
@@ -172,9 +176,9 @@ static int lua_client_command(lua_State * L)
     return luaL_error(L, "RedisAsyncContext is null");
   }
 
-  if(lua_isfunction(L, -1))
+  if (lua_isfunction(L, -1))
   {
-    ref = (luv_ref_t *)malloc(sizeof(luv_ref_t));
+    ref = (luv_ref_t *)malloc(sizeof(*ref));
     ref->L = L;
     lua_pushvalue(L, -1);
     ref->r = luaL_ref(L, LUA_REGISTRYINDEX);
@@ -191,20 +195,20 @@ static int lua_client_command(lua_State * L)
                                         argv,
                                         argvlen);
 
-  if(commandStatus != REDIS_OK)
+  if (commandStatus != REDIS_OK)
   {
     lua_rawgeti(L, LUA_REGISTRYINDEX, ref->r);
+    luaL_unref(L, LUA_REGISTRYINDEX, ref->r);
+    free(ref);
     luv_push_async_error_raw(L, NULL, "Redis connection problem", "client_command", NULL);
     lua_pushnil(L);
     lua_call(L, 2, 0);
-    luaL_unref(L, LUA_REGISTRYINDEX, ref-> r);
-    free(ref);
   }
 
   return 0;
 }
 
-static int lua_client_disconnect(lua_State * L)
+static int lua_client_disconnect(lua_State *L)
 {
   lua_redis_client_t *lua_redis_client = (lua_redis_client_t *)
                                     luaL_checkudata(L, 1, LUA_REDIS_CLIENT_MT);
@@ -219,7 +223,7 @@ static int lua_client_disconnect(lua_State * L)
   return 0;
 }
 
-void connectCallback(const redisAsyncContext *redisAsyncContext, int status)
+static void connectCallback(const redisAsyncContext *redisAsyncContext, int status)
 {
   luv_ref_t *ref = redisAsyncContext->data;
   lua_State *L = ref->L;
@@ -236,9 +240,9 @@ void connectCallback(const redisAsyncContext *redisAsyncContext, int status)
   }
 }
 
-static int lua_client_on_connect(lua_State * L)
+static int lua_client_on_connect(lua_State *L)
 {
-  lua_redis_client_t * lua_redis_client = (lua_redis_client_t *)
+  lua_redis_client_t *lua_redis_client = (lua_redis_client_t *)
                                     luaL_checkudata(L, 1, LUA_REDIS_CLIENT_MT);
 
   if (lua_redis_client->redis_async_context == NULL)
@@ -253,7 +257,7 @@ static int lua_client_on_connect(lua_State * L)
   return 0;
 }
 
-void disconnectCallback(const redisAsyncContext *redisAsyncContext, int status)
+static void disconnectCallback(const redisAsyncContext *redisAsyncContext, int status)
 {
   luv_ref_t *ref = redisAsyncContext->data;
   lua_State *L = ref->L;
@@ -270,7 +274,7 @@ void disconnectCallback(const redisAsyncContext *redisAsyncContext, int status)
   }
 }
 
-static int lua_client_on_disconnect(lua_State * L)
+static int lua_client_on_disconnect(lua_State *L)
 {
   lua_redis_client_t *lua_redis_client = (lua_redis_client_t *)
                                     luaL_checkudata(L, 1, LUA_REDIS_CLIENT_MT);
@@ -286,7 +290,7 @@ static int lua_client_on_disconnect(lua_State * L)
   return 0;
 }
 
-static int lua_client_on_error(lua_State * L)
+static int lua_client_on_error(lua_State *L)
 {
   lua_redis_client_t *lua_redis_client = (lua_redis_client_t *)
                                     luaL_checkudata(L, 1, LUA_REDIS_CLIENT_MT);
@@ -301,7 +305,7 @@ static int lua_client_on_error(lua_State * L)
   return 0;
 }
 
-static int lua_create_client(lua_State * L)
+static int lua_create_client(lua_State *L)
 {
   lua_redis_client_t *lua_redis_client = NULL;
   redisAsyncContext *redis_async_context = NULL;
@@ -329,9 +333,9 @@ static int lua_create_client(lua_State * L)
   lua_setmetatable(L, -2);
 
   lua_newtable(L);
-  lua_setfenv (L, -2);
+  lua_setfenv(L, -2);
 
-  ref = (luv_ref_t*)malloc(sizeof(luv_ref_t));
+  ref = (luv_ref_t*)malloc(sizeof(*ref));
   ref->L = L;
   lua_pushvalue(L, -1);
   ref->r = luaL_ref(L, LUA_REGISTRYINDEX);
@@ -340,7 +344,7 @@ static int lua_create_client(lua_State * L)
   return 1;
 }
 
-static const luaL_reg redis_client_methods []=
+static const luaL_reg redis_client_methods[] =
 {
   { "command", lua_client_command },
   { "disconnect", lua_client_disconnect },
@@ -356,7 +360,7 @@ static const luaL_reg exports[] =
   { NULL, NULL }
 };
 
-LUALIB_API int luaopen_redis(lua_State * L)
+LUALIB_API int luaopen_redis(lua_State *L)
 {
   luaL_newmetatable(L, LUA_REDIS_CLIENT_MT);
   lua_pushvalue(L, -1);
