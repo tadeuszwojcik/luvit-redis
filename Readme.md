@@ -196,35 +196,37 @@ The commands can be specified in uppercase or lowercase for convenience, `client
 
 `client` object will emit some events about the state of the connection to the Redis server.
 
-### "connect"
+#### "connect"
 
 `client` will emit `connect` event when first write event is received (stream is connected to redis).
 
-### "disconnect"
+#### "disconnect"
 
 `client` will emit `disconnect` event when connection is disconnected (per user request).
 
-### "error"
+#### "error"
 
 `client` will emit `error` when encountering an error with connection to the Redis server.
 
 Note that "error" is a special event type in luvit.  If there are no listeners for an "error" event, luvit will exit.
 
-## redis:new(port, host, autoReconnect)
+
+### redis:new(port, host, autoReconnect)
 
 Create a new client connection.  `port` defaults to `6379` and `host` defaults
 to `127.0.0.1`.  If you have `redis-server` running on the same computer as node, then the defaults for
 port and host are probably fine.
 
-### autoReconnect
+#### autoReconnect
+
 luvi-redis has autoReconnect functionality to `redis-sever` build in. You can turn it off by setting 'autoReconnect' to false.
  
 (TODO: add more explanation how it works.)
 
-### "registerCommand"
+### client:registerCommand(...)
  (todo)
 
-### "command"
+### client:command(...)
   (todo)
   
 ### client:disconnect()
@@ -234,12 +236,25 @@ Instead, new commands are no longer accepted and the connection is only terminat
 pending commands have been written to the socket,
 their respective replies have been read and their respective callbacks have been executed.
 
+### redis.print()
+
+A handy callback function for displaying return values when testing.
+
 
 `new()` returns a `RedisClient` object that is named `client` in all of the examples here.
 
 
-Credits
--------
+
+## TODO
+	  	
+* unit tests  	
+* improve docs	  	
+* more examples	  	
+* client auth	  	
+* c optimizations ?
+
+## Credits
+
 Thanks to Salvatore Sanfilippo for creating Redis in first place and hiredis driver,
 Matt Ranney for creating node-redis,
 Alexander Gladysh for creating lua hiredis,
@@ -247,11 +262,7 @@ Tim Caswell for creating luvit,
 and Vladimir Dronnikov for all help as without him that module would never happen.
 Thank you all!
 
-
-
-
-License
--------
+## License
 
 (The MIT License)
 
