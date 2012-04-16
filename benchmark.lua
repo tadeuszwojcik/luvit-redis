@@ -4,22 +4,18 @@ local num_requests = 100000
 local tests = {}
 local Object = require('core').Object
 local small_str="1234"
-local large_str=""
+local large_str=("-"):rep(2048)
 local table= require("table")
 local os= require("os")
 local math= require("math")
 local string= require("string")
-
-while(#large_str < 2049) do
-    large_str=large_str .. '-'
-end
-
 
 function lpad(input, len, chr)
 
     local str = tostring(input)
     chr = chr or " ";
 
+    -- FIXME: use string.rep here
     while (#str < len) do
         str = chr .. str
     end
@@ -186,6 +182,7 @@ table.insert(tests,Test:new({descr= "LRANGE 100", command= "lrange", args= {"lra
 table.insert(tests,Test:new({descr= "LRANGE 100", command= "lrange", args= {"lrange","mylist", "0", "99"}, pipeline= 50000}))
 table.insert(tests,Test:new({descr= "LRANGE 100", command= "lrange", args= {"lrange","mylist", "0", "99"}, pipeline= 100000}))
 
+-- FIXME: next is predefined function in Lua
 function next()
     local test = table.remove(tests, 1)
     if (test) then

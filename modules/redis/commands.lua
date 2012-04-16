@@ -1,5 +1,4 @@
-return
-{
+return {
   "append",
   "auth",
   "bgrewriteaof",
@@ -139,4 +138,4 @@ return
   "zrevrank",
   "zscore",
   "zunionstore"
-  };
+};
