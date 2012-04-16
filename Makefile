@@ -1,4 +1,4 @@
-CFLAGS=$(shell luvit --cflags)
+CFLAGS=$(shell luvit --cflags | sed s/-Werror//)
 LIBS=$(shell luvit --libs)
 HIREDISDIR=deps/hiredis
 all: build/redis.luvit
@@ -12,7 +12,7 @@ ${HIREDISDIR}/libhiredis.a: ${HIREDISDIR}/Makefile
 
 build/%.luvit: src/%.c ${HIREDISDIR}/libhiredis.a
 	mkdir -p build
-	$(CC) ${CFLAGS} -I${HIREDISDIR} src/luvit-hiredis-adapter.h -o $@ $^ ${LIBS} ${HIREDISDIR}/libhiredis.a
+	$(CC) ${CFLAGS} -I${HIREDISDIR} -Isrc -o $@ $^ ${LIBS} ${HIREDISDIR}/libhiredis.a
 
 clean:
 	${MAKE} -C ${HIREDISDIR} clean
