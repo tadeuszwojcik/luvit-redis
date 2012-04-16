@@ -1,59 +1,64 @@
-luvit-redis - luvit redis client.
-=============
+# luvit-redis - luvit redis client.
 
-This is a redis client for luvit which under the hood uses offical hiredis c library
+
+This is a redis client for luvit which under the hood uses offical `hiredis` c library
 what makes it pretty fast (see benchmarks below).
 
-Installation
--------
+## Installation
 
-###from git
+
+### from git
 
     git clone https://github.com/twojcik/luvit-redis
     make
 
-Usage:
--------
+## Usage:
+
 
 ```lua
 local redis = require('redis')
 
 local client = redis:new()
 
-client:set('test-key','luvit-rocks',function(err, res)
-  if err then
-    print(err)
-  else
-    client:get('test-key',function(err, res)
-      print(res)
-    end)
-  end
+client:on("error", function (err)
+    print("Error (error callback): ", err)
 end)
 
+client:set('test-key','luvit-rocks', redis.print)
+client:hset("hash key", "hashtest 1", "some value", redis.print)
+client:hset("hash key", "hashtest 2", "some other value", redis.print)
+client:hkeys("hash key", function (err, replies)
+    print(#replies.." replies:")
+    for i,v in ipairs(replies) do print(i,v) end
+end)
+
+
+##### This will display:
+
+```
+tadek@ubuntudev:~/Projects/luvit-redis$ luvit examples/example.lua
+Reply:  OK
+Reply:  0
+Reply:  0
+2 replies:
+1 hashtest 1
+2 hashtest 2
 ```
 
-TODO
--------
 
-* unit tests
-* docs
-* more examples
-* client auth
-* c optimizations ?
+## BENCHMARKS
+#### (comparison of `node-redis` and `luvit-redis`).
 
+Benchmark performed on single box, on `Intel I7 i920`.
 
-BENCHMARKS (comparison of node-redis and luvit-redis).
--------
-
-Benchmark performed on single box, on Intel I7 i920.
+#### `luvit-redis` is about 3x to 13x faster than `node-redis`.
 
 
-### BENCHMARK (benchmark.lua) - luvit
+### BENCHMARK (benchmark.lua) - `luvit`
 
 x/yy x - pipeline size, yy - num of clients
 
 ```
-
           PING        1/10   3.93s total,   25445.29 ops/sec
           PING       50/10   0.54s total,  185185.19 ops/sec
           PING      200/10   0.33s total,  303030.30 ops/sec
@@ -110,7 +115,7 @@ x/yy x - pipeline size, yy - num of clients
     LRANGE 100   100000/10   1.99s total,   50251.26 ops/sec
 ```
 
-### BENCHMARK (multi_bench.js) - node.js
+### BENCHMARK (multi_bench.js) - `node.js`
 x/yy x- pipeline size, yy - num of clients
 
 ```
@@ -141,12 +146,6 @@ parser: hiredis
  SET large str    20000/10  3761ms total, 26588.67 ops/sec
  SET large str    50000/10  3776ms total, 26483.05 ops/sec
  SET large str   100000/10  3575ms total, 27972.03 ops/sec
- SET large buf        1/10 12189ms total,  8204.12 ops/sec
- SET large buf       50/10 10193ms total,  9810.65 ops/sec
- SET large buf      200/10 10105ms total,  9896.09 ops/sec
- SET large buf    20000/10 10384ms total,  9630.20 ops/sec
- SET large buf    50000/10 10342ms total,  9669.31 ops/sec
- SET large buf   100000/10 11371ms total,  8794.30 ops/sec
  GET large str        1/10  8859ms total, 11287.96 ops/sec
  GET large str       50/10  3858ms total, 25920.17 ops/sec
  GET large str      200/10  3776ms total, 26483.05 ops/sec
@@ -179,6 +178,65 @@ parser: hiredis
     LRANGE 100   100000/10  5392ms total, 18545.99 ops/sec
 ```
 
+
+## Sending Commands
+
+Each Redis command is exposed as a function on the `client` object.
+All functions take variable number of individual arguments followed by an **optional callback**.
+
+Example:
+
+    ```lua
+    client:mset("test keys 1", "test val 1", "test keys 2", "test val 2", function (err, res) end)
+    ```
+
+
+For a list of Redis commands, see [Redis Command Reference](http://redis.io/commands)
+
+The commands can be specified in uppercase or lowercase for convenience.  `client:get()` is the same as `client:GET()`.
+
+## API
+
+### Connection events
+
+`client` object will emit some events about the state of the connection to the Redis server.
+
+### "connect"
+
+`client` will emit `connect` event when first write event is received (stream is connected to redis).
+
+## "registerCommand"
+  todo
+
+## "command"
+  todo
+
+### "disconnect"
+
+`client` will emit `disconnect` event when connection is disconnected (either because of an error or per user request).
+
+### "error"
+
+`client` will emit `error` when encountering an error with connection to the Redis server.
+
+Note that "error" is a special event type in luvit.  If there are no listeners for an "error" event, luvit will exit.
+
+## redis:new(port, host, autoReconnect)
+Create a new client connection.  `port` defaults to `6379` and `host` defaults
+to `127.0.0.1`.  If you have `redis-server` running on the same computer as node, then the defaults for
+port and host are probably fine.
+
+### autoReconnect
+luvi-redis has autoReconnect to `redis-sever` build in. You can turn it of by setting 'autoReconnect' to false.
+ TODO: add more explanation how it works.
+
+
+## client:disconnect()
+
+When this function is called, the connection is not immediately terminated. Instead, new commands are no longer accepted and the connection is only terminated when all pending commands have been written to the socket, their respective replies have been read and their respective callbacks have been executed.
+
+
+`new()` returns a `RedisClient` object that is named `client` in all of the examples here.
 
 
 Credits

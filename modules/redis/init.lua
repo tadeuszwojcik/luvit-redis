@@ -54,7 +54,6 @@ function RedisClient:initialize(host, port, autoReconnect)
   self.redisNativeClient:onError(function(err)
     if(autoReconnect and self.retryTimer == nil) then
       self.retryTimer = timer.setTimeout(250, function ()
-        p('reconnecting')
         self:initialize(host, port, autoReconnect)
         self.retryTimer = nil
     end)
@@ -73,4 +72,12 @@ function RedisClient:initialize(host, port, autoReconnect)
 
 end
 
-return RedisClient
+RedisClient.print = function(err, reply)
+  if err then
+    print("Error: ", err)
+  else
+    print("Reply: ", reply)
+  end
+end
+
+return  RedisClient
