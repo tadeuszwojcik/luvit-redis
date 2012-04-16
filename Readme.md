@@ -246,12 +246,17 @@ A handy callback function for displaying return values when testing.
 
 
 ## TODO
-	  	
+
+* apply fixes according to @DVV review comments
 * unit tests  	
 * improve docs	  	
 * more examples	  	
 * client auth	  	
 * c optimizations ?
+
+## Contributors
+* [Tadeusz Wójcik] (https://github.com/twojcik)
+* [Vladimir Dronnikov](https://github.com/dvv)
 
 ## Credits
 
