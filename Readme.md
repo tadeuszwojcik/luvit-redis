@@ -1,4 +1,4 @@
-# luvit-redis - luvit redis client.
+# luvit-redis - fast luvit redis client.
 
 
 This is a redis client for `luvit` which under the hood uses offical `hiredis` c library
