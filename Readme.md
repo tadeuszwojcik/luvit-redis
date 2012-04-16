@@ -1,7 +1,7 @@
 # luvit-redis - luvit redis client.
 
 
-This is a redis client for luvit which under the hood uses offical `hiredis` c library
+This is a redis client for `luvit` which under the hood uses offical `hiredis` c library
 what makes it pretty fast (see benchmarks below).
 
 ## Installation
@@ -12,8 +12,9 @@ what makes it pretty fast (see benchmarks below).
     git clone https://github.com/twojcik/luvit-redis
     make
 
-## Usage:
+## Usage
 
+Simple example, included as examples/exampe.lua:
 
 ```lua
 local redis = require('redis')
@@ -32,29 +33,27 @@ client:hkeys("hash key", function (err, replies)
     for i,v in ipairs(replies) do print(i,v) end
 end)
 
-
-##### This will display:
-
 ```
-tadek@ubuntudev:~/Projects/luvit-redis$ luvit examples/example.lua
-Reply:  OK
-Reply:  0
-Reply:  0
-2 replies:
-1 hashtest 1
-2 hashtest 2
-```
+This will display:
+
+    tadek@ubuntudev:~/Projects/luvit-redis$ luvit examples/example.lua
+    Reply:  OK
+    Reply:  0
+    Reply:  0
+    2 replies:
+    1 hashtest 1
+    2 hashtest 2
+
+## Benchmarks
+#### Comparison of `node-redis` and `luvit-redis`.
+
+#### Summary: `luvit-redis` is about 3x to 13x faster than `node-redis`.
+
+Benchmark performed on single box( on `Intel I7 i920`).
 
 
-## BENCHMARKS
-#### (comparison of `node-redis` and `luvit-redis`).
 
-Benchmark performed on single box, on `Intel I7 i920`.
-
-#### `luvit-redis` is about 3x to 13x faster than `node-redis`.
-
-
-### BENCHMARK (benchmark.lua) - `luvit`
+### `luvit-redis` (benchmark.lua)
 
 x/yy x - pipeline size, yy - num of clients
 
@@ -115,7 +114,7 @@ x/yy x - pipeline size, yy - num of clients
     LRANGE 100   100000/10   1.99s total,   50251.26 ops/sec
 ```
 
-### BENCHMARK (multi_bench.js) - `node.js`
+### `node-redis` (multi_bench.js)
 x/yy x- pipeline size, yy - num of clients
 
 ```
@@ -178,7 +177,6 @@ parser: hiredis
     LRANGE 100   100000/10  5392ms total, 18545.99 ops/sec
 ```
 
-
 ## Sending Commands
 
 Each Redis command is exposed as a function on the `client` object.
@@ -186,14 +184,11 @@ All functions take variable number of individual arguments followed by an **opti
 
 Example:
 
-    ```lua
     client:mset("test keys 1", "test val 1", "test keys 2", "test val 2", function (err, res) end)
-    ```
-
 
 For a list of Redis commands, see [Redis Command Reference](http://redis.io/commands)
 
-The commands can be specified in uppercase or lowercase for convenience.  `client:get()` is the same as `client:GET()`.
+The commands can be specified in uppercase or lowercase for convenience, `client:get()` is the same as `client:GET()`.
 
 ## API
 
@@ -205,15 +200,9 @@ The commands can be specified in uppercase or lowercase for convenience.  `clien
 
 `client` will emit `connect` event when first write event is received (stream is connected to redis).
 
-## "registerCommand"
-  todo
-
-## "command"
-  todo
-
 ### "disconnect"
 
-`client` will emit `disconnect` event when connection is disconnected (either because of an error or per user request).
+`client` will emit `disconnect` event when connection is disconnected (per user request).
 
 ### "error"
 
@@ -222,18 +211,28 @@ The commands can be specified in uppercase or lowercase for convenience.  `clien
 Note that "error" is a special event type in luvit.  If there are no listeners for an "error" event, luvit will exit.
 
 ## redis:new(port, host, autoReconnect)
+
 Create a new client connection.  `port` defaults to `6379` and `host` defaults
 to `127.0.0.1`.  If you have `redis-server` running on the same computer as node, then the defaults for
 port and host are probably fine.
 
 ### autoReconnect
-luvi-redis has autoReconnect to `redis-sever` build in. You can turn it of by setting 'autoReconnect' to false.
- TODO: add more explanation how it works.
+luvi-redis has autoReconnect functionality to `redis-sever` build in. You can turn it off by setting 'autoReconnect' to false.
+ 
+(TODO: add more explanation how it works.)
 
+### "registerCommand"
+ (todo)
 
-## client:disconnect()
+### "command"
+  (todo)
+  
+### client:disconnect()
 
-When this function is called, the connection is not immediately terminated. Instead, new commands are no longer accepted and the connection is only terminated when all pending commands have been written to the socket, their respective replies have been read and their respective callbacks have been executed.
+When this function is called, the connection is not immediately terminated.
+Instead, new commands are no longer accepted and the connection is only terminated when all
+pending commands have been written to the socket,
+their respective replies have been read and their respective callbacks have been executed.
 
 
 `new()` returns a `RedisClient` object that is named `client` in all of the examples here.
