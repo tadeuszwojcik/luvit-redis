@@ -38,11 +38,49 @@ typedef struct lua_redis_client_t
   redisAsyncContext *redis_async_context;
 } lua_redis_client_t;
 
-typedef struct
+typedef struct luv_ref_s
 {
   lua_State *L;
   int r;
+#if USE_REF_FREELIST
+  struct luv_ref_s *next;
+#endif
 } luv_ref_t;
+
+#if USE_REF_FREELIST
+
+/*
+ * Reference freelist
+ */
+
+static luv_ref_t *ref_freelist = NULL;
+
+static luv_ref_t *ref_alloc()
+{
+  luv_ref_t *ref;
+
+  ref = ref_freelist;
+  if (ref != NULL) {
+    ref_freelist = ref->next;
+  } else {
+    ref = (luv_ref_t *)malloc(sizeof *ref);
+  }
+
+  return ref;
+}
+
+static void ref_free(luv_ref_t *ref)
+{
+  ref->next = ref_freelist;
+  ref_freelist = ref;
+}
+
+#else
+
+#define ref_alloc() ((luv_ref_t *)malloc(sizeof(luv_ref_t)))
+#define ref_free(ref) free((void *)(ref))
+
+#endif
 
 static void luv_push_async_hiredis_error(lua_State *L,
                                          const redisAsyncContext *context,
@@ -108,7 +146,7 @@ static void on_redis_response(redisAsyncContext *context, void *reply, void *pri
   lua_State *L = ref->L;
   lua_rawgeti(L, LUA_REGISTRYINDEX, ref->r);
   luaL_unref(L, LUA_REGISTRYINDEX, ref->r);
-  free(ref);
+  ref_free(ref);
 
   if (redisReply == NULL)
   {
@@ -176,13 +214,12 @@ static int lua_client_command(lua_State *L)
     return luaL_error(L, "RedisAsyncContext is null");
   }
 
+  /* consume callback, if any */
   if (lua_isfunction(L, -1))
   {
-    ref = (luv_ref_t *)malloc(sizeof(*ref));
+    ref = ref_alloc();
     ref->L = L;
-    lua_pushvalue(L, -1);
     ref->r = luaL_ref(L, LUA_REGISTRYINDEX);
-    lua_pop(L, 1);
     redisCallback = on_redis_response;
   }
 
@@ -199,7 +236,7 @@ static int lua_client_command(lua_State *L)
   {
     lua_rawgeti(L, LUA_REGISTRYINDEX, ref->r);
     luaL_unref(L, LUA_REGISTRYINDEX, ref->r);
-    free(ref);
+    ref_free(ref);
     luv_push_async_error_raw(L, NULL, "Redis connection problem", "client_command", NULL);
     lua_pushnil(L);
     lua_call(L, 2, 0);
@@ -335,7 +372,7 @@ static int lua_create_client(lua_State *L)
   lua_newtable(L);
   lua_setfenv(L, -2);
 
-  ref = (luv_ref_t*)malloc(sizeof(*ref));
+  ref = ref_alloc();
   ref->L = L;
   lua_pushvalue(L, -1);
   ref->r = luaL_ref(L, LUA_REGISTRYINDEX);
