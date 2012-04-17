@@ -176,13 +176,12 @@ static int lua_client_command(lua_State *L)
     return luaL_error(L, "RedisAsyncContext is null");
   }
 
+  /* consume callback, if any */
   if (lua_isfunction(L, -1))
   {
     ref = (luv_ref_t *)malloc(sizeof(*ref));
     ref->L = L;
-    lua_pushvalue(L, -1);
     ref->r = luaL_ref(L, LUA_REGISTRYINDEX);
-    lua_pop(L, 1);
     redisCallback = on_redis_response;
   }
 
