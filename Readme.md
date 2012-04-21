@@ -58,60 +58,60 @@ Benchmark performed on single box( on `Intel I7 i920`).
 x/yy x - pipeline size, yy - num of clients
 
 ```
-          PING        1/10   3.93s total,   25445.29 ops/sec
-          PING       50/10   0.54s total,  185185.19 ops/sec
-          PING      200/10   0.33s total,  303030.30 ops/sec
-          PING    20000/10   0.24s total,  416666.67 ops/sec
-          PING    50000/10   0.22s total,  454545.45 ops/sec
-          PING   100000/10   0.20s total,  500000.00 ops/sec
- SET small str        1/10   3.86s total,   25906.74 ops/sec
- SET small str       50/10   0.57s total,  175438.60 ops/sec
- SET small str      200/10   0.36s total,  277777.78 ops/sec
- SET small str    20000/10   0.25s total,  400000.00 ops/sec
- SET small str    50000/10   0.25s total,  400000.00 ops/sec
- SET small str   100000/10   0.23s total,  434782.61 ops/sec
- GET small str        1/10   3.79s total,   26385.22 ops/sec
- GET small str       50/10   0.56s total,  178571.43 ops/sec
- GET small str      200/10   0.36s total,  277777.78 ops/sec
- GET small str    20000/10   0.26s total,  384615.38 ops/sec
- GET small str    50000/10   0.23s total,  434782.61 ops/sec
- GET small str   100000/10   0.22s total,  454545.45 ops/sec
- SET large str        1/10   4.31s total,   23201.86 ops/sec
- SET large str       50/10   0.76s total,  131578.95 ops/sec
- SET large str      200/10   0.53s total,  188679.25 ops/sec
- SET large str    20000/10   0.47s total,  212765.96 ops/sec
- SET large str    50000/10   0.63s total,  158730.16 ops/sec
- SET large str   100000/10   0.91s total,  109890.11 ops/sec
- GET large str        1/10   4.11s total,   24330.90 ops/sec
- GET large str       50/10   1.53s total,   65359.48 ops/sec
- GET large str      200/10   1.40s total,   71428.57 ops/sec
- GET large str    20000/10   1.34s total,   74626.87 ops/sec
- GET large str    50000/10   1.07s total,   93457.94 ops/sec
- GET large str   100000/10   0.69s total,  144927.54 ops/sec
-          INCR        1/10   3.51s total,   28490.03 ops/sec
-          INCR       50/10   0.54s total,  185185.19 ops/sec
-          INCR      200/10   0.33s total,  303030.30 ops/sec
-          INCR    20000/10   0.25s total,  400000.00 ops/sec
-          INCR    50000/10   0.22s total,  454545.45 ops/sec
-          INCR   100000/10   0.22s total,  454545.45 ops/sec
-         LPUSH        1/10   3.72s total,   26881.72 ops/sec
-         LPUSH       50/10   0.57s total,  175438.60 ops/sec
-         LPUSH      200/10   0.34s total,  294117.65 ops/sec
-         LPUSH    20000/10   0.26s total,  384615.38 ops/sec
-         LPUSH    50000/10   0.25s total,  400000.00 ops/sec
-         LPUSH   100000/10   0.22s total,  454545.45 ops/sec
-     LRANGE 10        1/10   4.33s total,   23094.69 ops/sec
-     LRANGE 10       50/10   0.77s total,  129870.13 ops/sec
-     LRANGE 10      200/10   0.54s total,  185185.19 ops/sec
-     LRANGE 10    20000/10   0.50s total,  200000.00 ops/sec
-     LRANGE 10    50000/10   0.46s total,  217391.30 ops/sec
-     LRANGE 10   100000/10   0.44s total,  227272.73 ops/sec
-    LRANGE 100        1/10   7.15s total,   13986.01 ops/sec
-    LRANGE 100       50/10   2.57s total,   38910.51 ops/sec
-    LRANGE 100      200/10   2.59s total,   38610.04 ops/sec
-    LRANGE 100    20000/10   2.76s total,   36231.88 ops/sec
-    LRANGE 100    50000/10   2.42s total,   41322.31 ops/sec
-    LRANGE 100   100000/10   1.99s total,   50251.26 ops/sec
+          PING        1/10  5.411s total,   18481.98 ops/sec
+          PING       50/10  0.511s total,  195546.21 ops/sec
+          PING      200/10  0.311s total,  321286.15 ops/sec
+          PING    20000/10  0.230s total,  435159.23 ops/sec
+          PING    50000/10  0.221s total,  453050.36 ops/sec
+          PING   100000/10  0.209s total,  477336.03 ops/sec
+ SET small str        1/10  5.791s total,   17266.72 ops/sec
+ SET small str       50/10  0.541s total,  184797.48 ops/sec
+ SET small str      200/10  0.338s total,  295445.51 ops/sec
+ SET small str    20000/10  0.249s total,  401343.46 ops/sec
+ SET small str    50000/10  0.241s total,  415111.58 ops/sec
+ SET small str   100000/10  0.276s total,  362384.55 ops/sec
+ GET small str        1/10  5.528s total,   18090.44 ops/sec
+ GET small str       50/10  0.538s total,  186025.01 ops/sec
+ GET small str      200/10  0.332s total,  301571.67 ops/sec
+ GET small str    20000/10  0.245s total,  407369.81 ops/sec
+ GET small str    50000/10  0.234s total,  427156.81 ops/sec
+ GET small str   100000/10  0.222s total,  450142.26 ops/sec
+ SET large str        1/10  6.022s total,   16606.71 ops/sec
+ SET large str       50/10  0.729s total,  137158.40 ops/sec
+ SET large str      200/10  0.543s total,  184146.14 ops/sec
+ SET large str    20000/10  0.460s total,  217493.53 ops/sec
+ SET large str    50000/10  0.755s total,  132451.57 ops/sec
+ SET large str   100000/10  0.889s total,  112432.06 ops/sec
+ GET large str        1/10  6.319s total,   15825.11 ops/sec
+ GET large str       50/10  1.372s total,   72890.50 ops/sec
+ GET large str      200/10  1.221s total,   81922.56 ops/sec
+ GET large str    20000/10  1.252s total,   79886.88 ops/sec
+ GET large str    50000/10  1.146s total,   87288.52 ops/sec
+ GET large str   100000/10  0.848s total,  117871.43 ops/sec
+          INCR        1/10  5.524s total,   18103.14 ops/sec
+          INCR       50/10  0.528s total,  189301.07 ops/sec
+          INCR      200/10  0.327s total,  305526.24 ops/sec
+          INCR    20000/10  0.240s total,  416123.88 ops/sec
+          INCR    50000/10  0.232s total,  431203.55 ops/sec
+          INCR   100000/10  0.246s total,  407282.39 ops/sec
+         LPUSH        1/10  5.518s total,   18123.52 ops/sec
+         LPUSH       50/10  0.530s total,  188726.54 ops/sec
+         LPUSH      200/10  0.331s total,  301726.57 ops/sec
+         LPUSH    20000/10  0.250s total,  399644.79 ops/sec
+         LPUSH    50000/10  0.244s total,  409599.60 ops/sec
+         LPUSH   100000/10  0.249s total,  401584.01 ops/sec
+     LRANGE 10        1/10  6.479s total,   15435.33 ops/sec
+     LRANGE 10       50/10  0.781s total,  128076.22 ops/sec
+     LRANGE 10      200/10  0.548s total,  182371.91 ops/sec
+     LRANGE 10    20000/10  0.538s total,  185805.23 ops/sec
+     LRANGE 10    50000/10  0.504s total,  198485.58 ops/sec
+     LRANGE 10   100000/10  0.576s total,  173646.70 ops/sec
+    LRANGE 100        1/10 10.582s total,    9449.91 ops/sec
+    LRANGE 100       16/10  2.754s total,   36309.17 ops/sec
+    LRANGE 100      200/10  2.581s total,   38743.34 ops/sec
+    LRANGE 100    20000/10  4.245s total,   23558.74 ops/sec
+    LRANGE 100    50000/10  4.593s total,   21772.32 ops/sec
+    LRANGE 100   100000/10  5.079s total,   19687.76 ops/sec
 ```
 
 ### `node-redis` (multi_bench.js)
