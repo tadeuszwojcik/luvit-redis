@@ -1,4 +1,4 @@
-local redis = require("redis")
+local redis = require("./")
 local num_clients = 10
 local num_requests = 100000
 local tests = {}
