@@ -2,7 +2,7 @@ local Emitter = require('core').Emitter
 local fs = require('fs')
 local timer = require('timer')
 
-local redisNative = require('../../build/redis')
+local redisNative = require('../build/redis')
 
 local RedisClient = Emitter:extend()
 

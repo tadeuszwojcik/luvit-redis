@@ -1,4 +1,4 @@
-local redis = require('redis')
+local redis = require('../')
 
 local client = redis:new()
 
