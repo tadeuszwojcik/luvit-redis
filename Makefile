@@ -1,5 +1,6 @@
-CFLAGS  = $(shell luvit --cflags | sed s/-Werror//)
-LIBS    = $(shell luvit --libs)
+LUVIT = luvit
+CFLAGS  = $(shell $(LUVIT) --cflags | sed s/-Werror//)
+LIBS    = $(shell $(LUVIT) --libs)
 HIREDISDIR = deps/hiredis
 
 # uncomment to use freelist for references (saves malloc/free calls)
