@@ -9,8 +9,8 @@ local RedisClient = Emitter:extend()
 -- proxy native client commands
 do
   local commands = require('./commands')
-  for index, value in ipairs(commands) do
-    value = value:lower()
+  for index = 1, #commands do
+    value = commands[index]:lower()
     RedisClient[value] = function(self, ...)
       self.redisNativeClient:command(value, ...)
     end
@@ -23,7 +23,7 @@ function RedisClient:initialize(host, port, autoReconnect)
 
   host = host or '127.0.0.1'
   port = port or 6379
-  autoReconnect = autoReconnect or true
+  autoReconnect = autoReconnect == nil and true
 
   self.hiredisVersion = redisNative.version
   self.redisNativeClient = redisNative.createClient(host, port)
@@ -53,28 +53,36 @@ end
 -- register custom command
 function RedisClient:registerCommand(
     commandName,
-    scriptFilePath,
+    script,
     numOfKeys,
     callback
   )
-  -- FIXME: in async environment it's bad to be sync beyound making require()s
-  local script = fs.readFileSync(scriptFilePath)
-  if not self.lua then
-    self.lua = {}
-  end
-  self.lua[commandName] = {}
-  self.lua[commandName].numOfKeys = numOfKeys
-  self.redisNativeClient:command('SCRIPT', 'LOAD', script, function(err, res)
-    self.lua[commandName].sha1 = res;
+  self.redisNativeClient:command('SCRIPT', 'LOAD', script, function(err, sha1)
+    if err then callback(err) ; return end
+    -- FIXME: Utils.bind?
     RedisClient[commandName] = function(self, ...)
       self.redisNativeClient:command(
           'EVALSHA',
-          self.lua[commandName].sha1,
-          self.lua[commandName].numOfKeys,
+          sha1,
+          numOfKeys,
           ...
         )
     end
     callback()
+  end)
+end
+
+-- register custom command read from a file
+-- FIXME: should it be in this lib ever?
+function RedisClient:registerCommandFromFile(
+    commandName,
+    scriptFilePath,
+    numOfKeys,
+    callback
+  )
+  fs.readFile(scriptFilePath, function(err, script)
+    if err then callback(err) ; return end
+    self:registerCommand(commandName, script, numOfKeys, callback)
   end)
 end
 
