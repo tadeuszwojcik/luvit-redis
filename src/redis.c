@@ -31,7 +31,7 @@
 #define LUA_REDIS_CLIENT_MT "lua.redis.client"
 
 // DVV: hmmm. this limit should be put in readme then?
-#define LUA_REDIS_MAX_ARGS (256)
+#define LUA_REDIS_MAX_ARGS (LUAI_MAXCSTACK)
 
 typedef struct lua_redis_client_t
 {
@@ -95,9 +95,7 @@ static int push_reply(lua_State *L, redisReply *redisReply)
   {
     case REDIS_REPLY_ERROR:
       lua_pop(L, 1);
-      // DVV: FIXME: shouldn't we return 2 for 2 results? OTOH, what's the sense of passing nil?
       luv_push_async_error_raw(L, NULL, redisReply->str, "push_reply", NULL);
-      lua_pushnil(L);
       break;
 
     case REDIS_REPLY_STATUS:
@@ -162,49 +160,15 @@ static void on_redis_response(redisAsyncContext *context, void *reply, void *pri
   }
 }
 
-static int push_command_args(lua_State *L,
-                             int idx,
-                             const char **argv,
-                             size_t *argvlen)
-{
-  int nargs = lua_gettop(L) - idx + 1;
-  int i;
-
-  if (nargs <= 0)
-  {
-    return luaL_error(L, "missing command name");
-  }
-
-  if (nargs > LUA_REDIS_MAX_ARGS)
-  {
-    return luaL_error(L, "too many arguments");
-  }
-
-  for (i = 0; i < nargs; ++i)
-  {
-    size_t len = 0;
-    const char *str = lua_tolstring(L, idx + i, &len);
-
-    if (str == NULL)
-    {
-      return luaL_argerror(L, idx + i, "expected a string or number value");
-    }
-
-    argv[i] = str;
-    argvlen[i] = len;
-  }
-
-  return nargs;
-}
-
 static int lua_client_command(lua_State *L)
 {
   lua_redis_client_t *lua_redis_client = (lua_redis_client_t *)
                                     luaL_checkudata(L, 1, LUA_REDIS_CLIENT_MT);
 
-  const char *argv[LUA_REDIS_MAX_ARGS];
-  size_t argvlen[LUA_REDIS_MAX_ARGS];
-  int nargs;
+  static const char *argv[LUA_REDIS_MAX_ARGS];
+  static size_t argvlen[LUA_REDIS_MAX_ARGS];
+
+  int nargs, i;
   luv_ref_t *ref = NULL;
   int commandStatus;
   redisCallbackFn *redisCallback = NULL;
@@ -223,7 +187,26 @@ static int lua_client_command(lua_State *L)
     redisCallback = on_redis_response;
   }
 
-  nargs = push_command_args(L, 2, argv, argvlen);
+  // TODO: support table of arguments
+  nargs = lua_gettop(L) - 1;
+
+  if (nargs <= 0)
+  {
+    return luaL_error(L, "missing command name");
+  }
+  if (nargs > LUA_REDIS_MAX_ARGS)
+  {
+    return luaL_error(L, "too many arguments");
+  }
+
+  for (i = 0; i < nargs; ++i)
+  {
+    argv[i] = lua_tolstring(L, 2 + i, &argvlen[i]);
+    if (argv[i] == NULL)
+    {
+      return luaL_argerror(L, 2 + i, "expected a string or number value");
+    }
+  }
 
   commandStatus = redisAsyncCommandArgv(lua_redis_client->redis_async_context,
                                         redisCallback,
