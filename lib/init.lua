@@ -10,7 +10,7 @@ local RedisClient = Emitter:extend()
 do
   local commands = require('./commands')
   for index = 1, #commands do
-    value = commands[index]:lower()
+    local value = commands[index]:lower()
     RedisClient[value] = function(self, ...)
       self.redisNativeClient:command(value, ...)
     end
