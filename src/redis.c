@@ -356,7 +356,7 @@ static int lua_create_client(lua_State *L)
     return luaL_error(L, redis_async_context->errstr);
   }
 
-  redisLibevAttach(EV_DEFAULT_ redis_async_context);
+  redisLibuvAttach(redis_async_context, uv_default_loop());
 
   lua_redis_client = (lua_redis_client_t *)lua_newuserdata(
                                           L, sizeof(lua_redis_client_t));
