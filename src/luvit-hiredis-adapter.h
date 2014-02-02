@@ -1,119 +1,124 @@
-#ifndef __HIREDIS_LIBEV_H__
-#define __HIREDIS_LIBEV_H__
+#ifndef __HIREDIS_LIBUV_H__
+#define __HIREDIS_LIBUV_H__
 
 #include <stdlib.h>
-#include <sys/types.h>
+#include <string.h>
 
 #include "uv.h"
 #include "hiredis.h"
 #include "async.h"
 
-typedef struct redisLibevEvents {
-    redisAsyncContext *context;
-    struct ev_loop *loop;
-    int reading, writing;
-    ev_io rev, wev;
-} redisLibevEvents;
 
-static void redisLibevReadEvent(EV_P_ ev_io *watcher, int revents) {
-#if EV_MULTIPLICITY
-    ((void)loop);
-#endif
-    ((void)revents);
+typedef struct redisLibuvEvents {
+  redisAsyncContext* context;
+  uv_poll_t          handle;
+  int                events;
+} redisLibuvEvents;
 
-    redisLibevEvents *e = (redisLibevEvents*)watcher->data;
-    redisAsyncHandleRead(e->context);
+
+static void redisLibuvPoll(uv_poll_t* handle, int status, int events) {
+  redisLibuvEvents* p = (redisLibuvEvents*)handle->data;
+
+  if (status != 0) {
+    return;
+  }
+
+  if (events & UV_READABLE) {
+    redisAsyncHandleRead(p->context);
+  }
+  if (events & UV_WRITABLE) {
+    redisAsyncHandleWrite(p->context);
+  }
 }
 
-static void redisLibevWriteEvent(EV_P_ ev_io *watcher, int revents) {
-#if EV_MULTIPLICITY
-    ((void)loop);
-#endif
-    ((void)revents);
 
-    redisLibevEvents *e = (redisLibevEvents*)watcher->data;
-    redisAsyncHandleWrite(e->context);
+static void redisLibuvAddRead(void *privdata) {
+  redisLibuvEvents* p = (redisLibuvEvents*)privdata;
+
+  p->events |= UV_READABLE;
+
+  uv_poll_start(&p->handle, p->events, redisLibuvPoll);
 }
 
-static void redisLibevAddRead(void *privdata) {
-    redisLibevEvents *e = (redisLibevEvents*)privdata;
-    struct ev_loop *loop = e->loop;
-    ((void)loop);
-    if (!e->reading) {
-        e->reading = 1;
-        ev_io_start(EV_A_ &e->rev);
-    }
+
+static void redisLibuvDelRead(void *privdata) {
+  redisLibuvEvents* p = (redisLibuvEvents*)privdata;
+
+  p->events &= ~UV_READABLE;
+
+  if (p->events) {
+    uv_poll_start(&p->handle, p->events, redisLibuvPoll);
+  } else {
+    uv_poll_stop(&p->handle);
+  }
 }
 
-static void redisLibevDelRead(void *privdata) {
-    redisLibevEvents *e = (redisLibevEvents*)privdata;
-    struct ev_loop *loop = e->loop;
-    ((void)loop);
-    if (e->reading) {
-        e->reading = 0;
-        ev_io_stop(EV_A_ &e->rev);
-    }
+
+static void redisLibuvAddWrite(void *privdata) {
+  redisLibuvEvents* p = (redisLibuvEvents*)privdata;
+
+  p->events |= UV_WRITABLE;
+
+  uv_poll_start(&p->handle, p->events, redisLibuvPoll);
 }
 
-static void redisLibevAddWrite(void *privdata) {
-    redisLibevEvents *e = (redisLibevEvents*)privdata;
-    struct ev_loop *loop = e->loop;
-    ((void)loop);
-    if (!e->writing) {
-        e->writing = 1;
-        ev_io_start(EV_A_ &e->wev);
-    }
+
+static void redisLibuvDelWrite(void *privdata) {
+  redisLibuvEvents* p = (redisLibuvEvents*)privdata;
+
+  p->events &= ~UV_WRITABLE;
+
+  if (p->events) {
+    uv_poll_start(&p->handle, p->events, redisLibuvPoll);
+  } else {
+    uv_poll_stop(&p->handle);
+  }
 }
 
-static void redisLibevDelWrite(void *privdata) {
-    redisLibevEvents *e = (redisLibevEvents*)privdata;
-    struct ev_loop *loop = e->loop;
-    ((void)loop);
-    if (e->writing) {
-        e->writing = 0;
-        ev_io_stop(EV_A_ &e->wev);
-    }
+
+static void on_close(uv_handle_t* handle) {
+  redisLibuvEvents* p = (redisLibuvEvents*)handle->data;
+
+  free(p);
 }
 
-static void redisLibevCleanup(void *privdata) {
-    redisLibevEvents *e = (redisLibevEvents*)privdata;
-    redisLibevDelRead(privdata);
-    redisLibevDelWrite(privdata);
-    free(e);
+
+static void redisLibuvCleanup(void *privdata) {
+  redisLibuvEvents* p = (redisLibuvEvents*)privdata;
+
+  uv_close((uv_handle_t*)&p->handle, on_close);
 }
 
-static int redisLibevAttach(EV_P_ redisAsyncContext *ac) {
-    redisContext *c = &(ac->c);
-    redisLibevEvents *e;
 
-    /* Nothing should be attached when something is already attached */
-    if (ac->ev.data != NULL)
-        return REDIS_ERR;
+int redisLibuvAttach(redisAsyncContext* ac, uv_loop_t* loop) {
+  redisContext *c = &(ac->c);
 
-    /* Create container for context and r/w events */
-    e = (redisLibevEvents*)malloc(sizeof(*e));
-    e->context = ac;
-#if EV_MULTIPLICITY
-    e->loop = loop;
-#else
-    e->loop = NULL;
-#endif
-    e->reading = e->writing = 0;
-    e->rev.data = e;
-    e->wev.data = e;
+  if (ac->ev.data != NULL) {
+    return REDIS_ERR;
+  }
 
-    /* Register functions to start/stop listening for events */
-    ac->ev.addRead = redisLibevAddRead;
-    ac->ev.delRead = redisLibevDelRead;
-    ac->ev.addWrite = redisLibevAddWrite;
-    ac->ev.delWrite = redisLibevDelWrite;
-    ac->ev.cleanup = redisLibevCleanup;
-    ac->ev.data = e;
+  ac->ev.addRead  = redisLibuvAddRead;
+  ac->ev.delRead  = redisLibuvDelRead;
+  ac->ev.addWrite = redisLibuvAddWrite;
+  ac->ev.delWrite = redisLibuvDelWrite;
+  ac->ev.cleanup  = redisLibuvCleanup;
 
-    /* Initialize read/write events */
-    ev_io_init(&e->rev,redisLibevReadEvent,c->fd,EV_READ);
-    ev_io_init(&e->wev,redisLibevWriteEvent,c->fd,EV_WRITE);
-    return REDIS_OK;
+  redisLibuvEvents* p = malloc(sizeof(*p));
+
+  if (!p) {
+    return REDIS_ERR;
+  }
+
+  memset(p, 0, sizeof(*p));
+
+  if (uv_poll_init(loop, &p->handle, c->fd) != 0) {
+    return REDIS_ERR;
+  }
+
+  ac->ev.data    = p;
+  p->handle.data = p;
+  p->context     = ac;
+
+  return REDIS_OK;
 }
-
 #endif
