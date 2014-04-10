@@ -346,9 +346,17 @@ static int lua_create_client(lua_State *L)
   redisAsyncContext *redis_async_context = NULL;
   luv_ref_t *ref;
   const char *host = luaL_checkstring(L, 1);
-  int port = luaL_checkint(L, 2);
 
-  redis_async_context = redisAsyncConnect(host, port);
+  if (strncasecmp(host, "unix:", 5) == 0)
+  {
+    const char *path = host + 5;
+    redis_async_context = redisAsyncConnectUnix(path);
+  }
+  else
+  {
+    int port = luaL_checkint(L, 2);
+    redis_async_context = redisAsyncConnect(host, port);
+  }
 
   if(redis_async_context->err)
   {
